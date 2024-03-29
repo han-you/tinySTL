@@ -144,6 +144,224 @@ namespace mystl
   struct is_random_iterator : public has_iterator_cat_of<Iterator, random_iterator_tag>
   {
   };
+
+  // 萃取某个iterator的category
+  template <class Iterator>
+  typename iterator_traits<Iterator>::iterator_catelogy
+  iterator_catelogy(const Iterator &)
+  {
+    typedef typename iterator_traits<Iterator>::iterator_catelogy Category;
+    return Category();
+  }
+
+  // 萃取某个iterator的difference_type
+  template <class Iterator>
+  typename iterator_traits<Iterator>::difference_type *
+  distance_type(const Iterator &)
+  {
+    return static_cast<typename iterator_traits<Iterator>::difference_type *>(0);
+  }
+
+  // 萃取某个iterator的vaue_type
+  template <class Iterator>
+  typename iterator_traits<Iterator>::value_type *
+  value_type(const Iterator &)
+  {
+    return static_cast<iterator_traits<Iterator>::value_type *>(0);
+  }
+
+  // distance的input_iterator版本
+  template <class InputIterator>
+  typename iterator_traits<InputIterator>::difference_type
+  distance_dispatch(InputIterator first, InputIterator last, input_iterator_tag)
+  {
+    typename iterator_traits<InputIterator>::difference_type n = 0;
+    while (first != last)
+    {
+      first++;
+      n++;
+    }
+    return n;
+  }
+
+  // distance的random_iterator版本
+  template <class RandomIterator>
+  typename iterator_traits<RandomIterator>::difference_type
+  distance_dispatch(RandomIterator first, RandomIterator last, random_iterator_tag)
+  {
+    return last - first;
+  }
+
+  template <class InputIterator>
+  typename iterator_traits<InputIterator>::difference_type
+  distance(InputIterator first, InputIterator last)
+  {
+    return distance_dispatch(first, last, iterator_catelogy(first));
+  }
+
+  // 以下函数用于将迭代器前进n个距离
+  template <class InputIterator, class Distance>
+  void advance_dispatch(InputIterator &i, Distance d, input_iterator_tag)
+  {
+    while (d--)
+      i++;
+  }
+
+  template <class RandomIterator, class Distance>
+  void advance_dispatch(RandomIterator &i, Distance d, random_iterator_tag)
+  {
+    i += d;
+  }
+
+  template <class Bidirectional, class Distance>
+  void advance_dispatch(Bidirectional &i, Distance d, bidirectional_iterator_tag)
+  {
+    if (d >= 0)
+    {
+      while (d--)
+      {
+        i++;
+      }
+    }
+    else
+    {
+      while (d++)
+      {
+        i--;
+      }
+    }
+  }
+
+  template <class InputIterator, class Distance>
+  void advance(InputIterator &i, Distance d)
+  {
+    advance_dispatch(i, d, iterator_catelogy(i));
+  }
+  /*********************************************************************************/
+  // 反向迭代器实现
+  template <class Iterator>
+  class reverse_iterator
+  {
+  private:
+    Iterator current;
+
+  public:
+    reverse_iterator(){};
+    explicit reverse_iterator(iterator_type i) : current(i){};
+    reverse_iterator(const self &rhs) : current(rhs.current){};
+    typedef iterator_traits<Iterator>::iterator_category category;
+    typedef iterator_traits<Iterator>::value_type value_type;
+    typedef iterator_traits<Iterator>::pointer pointer;
+    typedef iterator_traits<Iterator>::reference reference;
+    typedef iterator_traits<Iterator>::difference_type difference_type;
+    typedef Iterator iterator_type;
+    typedef reverse_iterator<Iterator> self;
+
+    // 取出正向迭代器
+    iterator_type base() const
+    {
+      return this->current;
+    }
+
+    reference operator*()
+    {
+      auto tmp = current;
+      return *(--tmp);
+    }
+    pointer operator->()
+    {
+      return &(operator*());
+    }
+    // 将--变成++
+    self &operator--()
+    {
+      current++;
+      return *this;
+    }
+    self operator--(int)
+    {
+      auto tmp = *this;
+      this->current--;
+      return tmp;
+    }
+    // 将++变成--
+    self &operator++()
+    {
+      current--;
+      return *this;
+    }
+    self operator++(int)
+    {
+      auto tmp = *this;
+      current--;
+      return tmp;
+    }
+
+    self &operator+=(difference_type n)
+    {
+      this->current -= n;
+      return *this;
+    }
+
+    self operator+(difference_type n) const
+    {
+      return self(current - n);
+    }
+
+    self operator-(difference_type n) const
+    {
+      return self(current + n);
+    }
+
+    reference operator[](difference_type n)
+    {
+      return *(*this + n);
+    }
+  };
+  // 全局重载
+  template <class Iterator>
+  typename iterator_traits<Iterator>::difference_type
+  operator-(const reverse_iterator<Iterator> &lhs, const reverse_iterator<Iterator> &rhs)
+  {
+    return rhs.base() - lhs.base();
+  }
+
+  template <class Iterator>
+  bool operator==(const reverse_iterator<Iterator> &lhs, const reverse_iterator<Iterator> &rhs)
+  {
+    return rhs.base() == lhs.base();
+  }
+
+  template <class Iterator>
+  bool operator!=(const reverse_iterator<Iterator> &lhs, const reverse_iterator<Iterator> &rhs)
+  {
+    return !(rhs.base() == lhs.base());
+  }
+
+  template <class Iterator>
+  bool operator>=(const reverse_iterator<Iterator> &lhs, const reverse_iterator<Iterator> &rhs)
+  {
+    return !(lhs > rsh);
+  }
+
+  template <class Iterator>
+  bool operator<=(const reverse_iterator<Iterator> &lhs, const reverse_iterator<Iterator> &rhs)
+  {
+    return !(rsh > lsh);
+  }
+
+  template <class Iterator>
+  bool operator<(const reverse_iterator<Iterator> &lhs, const reverse_iterator<Iterator> &rhs)
+  {
+    return lsh < rsh;
+  }
+
+  template <class Iterator>
+  bool operator>(const reverse_iterator<Iterator> &lhs, const reverse_iterator<Iterator> &rhs)
+  {
+    return rsh < lsh;
+  }
+
 }
 
 #endif
