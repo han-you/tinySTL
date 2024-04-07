@@ -8,12 +8,21 @@ namespace mystl
 #ifdef max
 #pragma message("#undefing marco max")
 #undef max
-#endif
+#endif // max
 
 #ifdef min
 #pragma message("#undefing marco min")
 #undef min
 #endif // min
+
+  template <class T>
+  T min(const T &a, const T &b)
+  {
+    if (a >= b)
+      return b;
+    else
+      return a;
+  }
   /***********************************************************************************/
   // max
   // 取二者中的较大值，语义相等时保证返回第一个参数
@@ -124,7 +133,7 @@ namespace mystl
   }
 
   template <class BidirectionalIter1, class BidirectionalIter2>
-  BidirectionalIter2 unchecked_copy_backward(BidirectionalIter1 first, BidirectionIter1 last, BidirectionalIter2 result)
+  BidirectionalIter2 unchecked_copy_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result)
   {
     return uncheck_copy_backward_cat(first, last, result, iterator_catelgory(first));
   }
@@ -336,7 +345,124 @@ namespace mystl
       first2++;
     }
     return true;
-  }
-}
 
-#endif
+    /*****************************************************************************************/
+    // fill_n
+    // 从 first 位置开始填充 n 个值
+    /*****************************************************************************************/
+    template <class OutputIter, class Size, class T>
+    OutputIter unchecked_fill_n(OutputIter first, Size n, const T &value)
+    {
+      while (n--)
+      {
+        *first = value;
+        first++;
+      }
+      return first;
+    }
+  }
+
+  template <class OutputIter, class Size, class T>
+  OutputIter fill_n(OutputIter first, Size n, const T &value)
+  {
+    return unchecked_fill_n(first, n, value);
+  }
+
+  /*****************************************************************************************/
+  // fill
+  // 为 [first, last)区间内的所有元素填充新值
+  /*****************************************************************************************/
+
+  template <class ForwardIter, class T>
+  void fill_cat(ForwardIter first, ForwardIter last, const T &value, mystl::forward_iterator_tag)
+  {
+    while (first != last)
+    {
+      *first = value;
+      first++;
+    }
+  }
+
+  template <class RandomIter, class T>
+  void fill_cat(RandomIter first, RandomIter last, const T &value, mystl::random_iterator_tag)
+  {
+    fill_n(first, last - first, value);
+  }
+
+  template <class ForwardIter, class T>
+  void fill(ForwardIter first, ForwardIter last, const T &value, mystl::forward_iterator_tag)
+  {
+    fill_cat(first, last, value);
+  }
+
+  /*****************************************************************************************/
+  // lexicographical_compare
+  // 以字典序排列对两个序列进行比较，当在某个位置发现第一组不相等元素时，有下列几种情况：
+  // (1)如果第一序列的元素较小，返回 true ，否则返回 false
+  // (2)如果到达 last1 而尚未到达 last2 返回 true
+  // (3)如果到达 last2 而尚未到达 last1 返回 false
+  // (4)如果同时到达 last1 和 last2 返回 false
+  /*****************************************************************************************/
+  template <class InputIter1, class InputIter2>
+  bool lexicographical_compare(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2)
+  {
+    while (first1 != last1 && first2 != last2)
+    {
+      if (*first1 < *first2)
+        return true;
+      if (*first1 > *first2)
+        return false;
+    }
+    return first1 == last1 && first2 != last2;
+  }
+
+  // 重载版本使用函数对象 comp 代替比较操作
+  template <class InputIter1, class InputIter2, class Compare>
+  bool lexicographical_compare(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2, Compare comp)
+  {
+    while (first1 != last1 && first2 != last2)
+    {
+      if (comp(*first1, *first2))
+        return true;
+      if (comp(*first2, *first1))
+        return false;
+    }
+    return first1 == last1 && first2 != last2;
+  }
+
+  // 针对 const unsigned char* 的特化版本
+  bool lexicographical_compare(const unsigned char *first1, const unsigned char *last1, const unsigned char *first2, const unsigned char *last2)
+  {
+    const auto len1 = last1 - first1;
+    const auto len2 = last2 - first2;
+
+    const auto result = std::memcmp(first1, first2, min(len1, len2));
+    return result != 0 ? result < 0 : len1 < len2;
+  }
+  /*****************************************************************************************/
+  // mismatch
+  // 平行比较两个序列，找到第一处失配的元素，返回一对迭代器，分别指向两个序列中失配的元素
+  /*****************************************************************************************/
+  template <class InputIter1, class InputIter2>
+  mystl::pair<InputIter1, InputIter2> miswatch(InputIter1 first1, InputIter1 last1, InputIter2 first2)
+  {
+    while (first1 != last1 && *first1 == *first2)
+    {
+      first1++;
+      first2++;
+    }
+    return mystl::pair<InputIter1, InputIter2>(first1, first2);
+  }
+  // 重载版本使用函数对象 comp 代替比较操作
+  template <class InputIter1, class InputIter2, class Compare>
+  mystl::pair<InputIter1, InputIter2> miswatch(InputIter1 first1, InputIter1 last1, InputIter2 first2, Compare comp)
+  {
+    while (first1 != last1 && comp(*first1, *first2))
+    {
+      first1++;
+      first2++;
+    }
+  }
+} // namespace mystl
+
+#endif // !MYTINYSTL_ALGOBASE_H_
