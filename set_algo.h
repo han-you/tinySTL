@@ -203,7 +203,7 @@ namespace mystl
 
   // 重载版本使用函数对象 comp 代替比较操作
   template <class InputIter1, class InputIter2, class OutputIter, class Compare>
-  OutputIter set_difference(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2, OutputIter result, Compare comp)
+  OutputIter set_symmetric_difference(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2, OutputIter result, Compare comp)
   {
     while (first1 != last1 && first2 != last2)
     {
